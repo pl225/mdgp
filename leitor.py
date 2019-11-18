@@ -68,8 +68,36 @@ class Instancia():
 
 		return Solucao(y, z, custo)
 
+	def swap(self, s, n):
+		grupos_n_elementos = np.where(s.z >= n)[0]
+
+		if grupos_n_elementos.size >= 2:
+			grupo_i, grupo_j = np.random.choice(grupos_n_elementos, 2, False)
+			elems_grupo_i = np.where(s.y == grupo_i)[0]
+			elems_grupo_j = np.where(s.y == grupo_j)[0]
+
+			elems_rand_i_index = np.random.choice(elems_grupo_i.size, n, False)
+			elems_rand_j_index = np.random.choice(elems_grupo_j.size, n, False)
+			elems_rand_i = elems_grupo_i[elems_rand_i_index]
+			elems_rand_j = elems_grupo_j[elems_rand_j_index]
+
+			y_novo = np.copy(s.y)
+			z_novo = np.copy(s.z)
+			elems_rest_i = np.delete(elems_grupo_i, elems_rand_i_index)
+			elems_rest_j = np.delete(elems_grupo_j, elems_rand_j_index)
+			
+			c_novo = s.f - 2 * (np.sum(self.distancias[elems_rand_i][:, elems_rest_i]) + np.sum(self.distancias[elems_rand_j][:, elems_rest_j]))
+			c_novo += 2 * (np.sum(self.distancias[elems_rand_i][:, elems_rest_j]) + np.sum(self.distancias[elems_rand_j][:, elems_rest_i]))
+
+			y_novo[elems_rand_i] = grupo_j
+			y_novo[elems_rand_j] = grupo_i
+
+			return Solucao(y_novo, z_novo, c_novo)
+		else:
+			return s
 
 if __name__ == '__main__':
+	#np.random.seed(0)
 	instancia = Instancia.ler_arquivo(sys.argv[1])
 	print(instancia.n)
 	print(instancia.g)
@@ -77,3 +105,4 @@ if __name__ == '__main__':
 	print(instancia.distancias)
 	s = instancia.produzir_solucao()
 	print(s.y, s.z, s.f)
+	print(instancia.swap(s, 1))
