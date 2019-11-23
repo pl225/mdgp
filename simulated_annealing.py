@@ -34,9 +34,9 @@ def simulated_annealing(instancia, alpha, temperatura_inicial, temperatura_final
 if __name__ == '__main__':
 	instancia = Instancia.ler_arquivo(sys.argv[1])
 	alpha = 0.9
-	temperatura_inicial = 1000#instancia.n * 1000
-	temperatura_final = 0.0001
-	s_max = 1000#instancia.n * 100
+	temperatura_inicial = (instancia.n * 10) // 2 #1000
+	temperatura_final = 0.001 #0.0001
+	s_max = (instancia.n * 10) // 2 #1000
 
 	print("Temperatura inicial: {}, temperatura final: {}, alpha: {}, sMax: {}".format(temperatura_inicial, temperatura_final, alpha, s_max))
 
