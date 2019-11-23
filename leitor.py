@@ -102,6 +102,49 @@ class Instancia():
 		else:
 			return s # retorno da mesma solução, já que não há vizinho viável
 
+	"""
+	Retorna um vizinho aleatório da solução s
+		n elementos de um grupo i e n elementos de um grupo j são intercambiados
+	"""
+	def relocacao(self, s, n):
+		limSup = self.limites[:, 1]
+		limInf = self.limites[:, 0]
+		grupos_inf = np.where(s.z >= limInf + n)[0] # grupos com o limite inferior mais n elementos satisfeito
+		grupos_sup = np.where(s.z <= limSup - n)[0] # grupos com o limite superior menos n elementos satisfeito
+
+		if grupos_inf.size > 0 and grupos_sup.size > 0: # se houver pelo menos dois conjuntos com mais de um elemento
+			
+			grupo_i = np.random.choice(grupos_inf, 1) # escolha aleatória do grupo i que perderá elementos
+			grupos_sup = np.delete(grupos_sup, np.argwhere(grupos_sup == grupo_i)) # exclusão do grupo i escolhido dos outros candidatos
+			
+			if grupos_sup.size > 0: # se ainda há mais de um elemento após a possível exclusão do grupo i
+				grupo_j = np.random.choice(grupos_sup, 1) # escolha aleatória do grupo j que receberá elementos
+				elems_grupo_i = np.where(s.y == grupo_i)[0] # aquisição de todos os elementos do grupo i
+				elems_grupo_j = np.where(s.y == grupo_j)[0] # aquisição de todos os elementos do grupo j
+
+				elems_rand_i_index = np.random.choice(elems_grupo_i.size, n, False) # escolha aleatória de n índices, ou seja, as posições dos elementos que serão tirados do grupo i
+				elems_rand_i = elems_grupo_i[elems_rand_i_index] # seleção dos elementos de acordo com os índices escolhidos aleatoriamente do grupo i
+
+				elems_rest_i = np.delete(elems_grupo_i, elems_rand_i_index) # separação dos elementos que continuarão no grupo i
+				c_novo = s.f - 2 * np.sum(self.distancias[elems_rand_i][:, elems_rest_i]) # retirada dos custos relacionados aos elementos que não estão mais em i
+				c_novo += 2 * np.sum(self.distancias[elems_rand_i][:, elems_grupo_j]) # adição dos custos dos elementos de i que irão para o grupo j
+
+				y_novo = np.copy(s.y) # cópia do vetor y de s
+				z_novo = np.copy(s.z) # cópia do vetor z de s
+				
+				y_novo[elems_rand_i] = grupo_j # atribuição dos elementos retirados de i ao grupo j
+				z_novo[grupo_i] -= n # decréscimo de n elementos do grupo i
+				z_novo[grupo_j] += n # acréscimo de n elementos ao grupo j
+
+				return Solucao(y_novo, z_novo, c_novo)
+                                
+			else:
+				return s # retorno da mesma solução, já que não há vizinho viável
+		
+		else:
+			return s # retorno da mesma solução, já que não há vizinho viável
+
+
 if __name__ == '__main__':
 	#np.random.seed(0)
 	instancia = Instancia.ler_arquivo(sys.argv[1])
@@ -110,5 +153,5 @@ if __name__ == '__main__':
 	print(instancia.limites)
 	print(instancia.distancias)
 	s = instancia.produzir_solucao()
-	print(s.y, s.z, s.f)
-	print(instancia.swap(s, 1))
+	print(s)
+	print(instancia.relocacao(s, 3))
