@@ -104,6 +104,40 @@ class Instancia():
 
 	"""
 	Retorna um vizinho aleatório da solução s
+		n elementos de um grupo m são intercambiados
+	"""
+	def swap_generico(self, s, m, n):
+		grupos_n_elementos = np.where(s.z >= n)[0] # separação dos grupos que tenham ao menos n elementos
+
+		if grupos_n_elementos.size >= m: # se houver pelo menos dois conjuntos com pelos menos n elementos
+			grupos_selecionados = np.random.choice(grupos_n_elementos, m, False) # escolha aleatória dos grupos i e j
+			
+			elementos_grupo = []
+			elems_rand_grupo = []
+			c_novo = s.f
+			for i in range(m):
+				elementos_grupo.append(np.where(s.y == grupos_selecionados[i])[0]) # aquisição de todos os elementos do grupo g
+				indexes = np.random.choice(elementos_grupo[i].size, n, False)
+				elems_rand_grupo.append(elementos_grupo[i][indexes])
+				elementos_grupo[i] = np.delete(elementos_grupo[i], indexes)
+				c_novo -= 2 * np.sum(self.distancias[elems_rand_grupo[i]][:, elementos_grupo[i]])
+
+			y_novo = np.copy(s.y) # cópia do vetor y de s
+			z_novo = np.copy(s.z) # cópia do vetor z de s
+
+			for i in range(m - 1):
+				c_novo += 2 * np.sum(self.distancias[elems_rand_grupo[i]][:, elementos_grupo[i + 1]])
+				y_novo[elems_rand_grupo[i]] = grupos_selecionados[i + 1]
+
+			c_novo += 2 * np.sum(self.distancias[elems_rand_grupo[-1]][:, elementos_grupo[0]])
+			y_novo[elems_rand_grupo[-1]] = grupos_selecionados[0]
+
+			return Solucao(y_novo, z_novo, c_novo) # retorno de uma nova solução
+		else:
+			return s # retorno da mesma solução, já que não há vizinho viável
+
+	"""
+	Retorna um vizinho aleatório da solução s
 		n elementos de um grupo i e n elementos de um grupo j são intercambiados
 	"""
 	def relocacao(self, s, n):
@@ -154,4 +188,4 @@ if __name__ == '__main__':
 	print(instancia.distancias)
 	s = instancia.produzir_solucao()
 	print(s)
-	print(instancia.relocacao(s, 3))
+	print(instancia.swap_generico(s, 3, 2))
