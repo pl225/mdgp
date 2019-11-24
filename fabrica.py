@@ -9,6 +9,15 @@ class FabricaSolucao():
 		self.limInf = self.instancia.limites[:, 0]
 		self.limSup = self.instancia.limites[:, 1]
 
+	def custo(self, y):
+		custo = 0
+
+		for i in range(self.instancia.g): # cálculo do custo da solução
+			elems_grupo_i = np.where(y == i)[0] # quais elementos são do grupo i
+			custo += np.sum(self.instancia.distancias[elems_grupo_i][:, elems_grupo_i]) # soma das distancias entre os elementos do grupo i
+
+		return custo
+
 	def produzir_solucao(self):
 		nums = np.arange(self.instancia.n) # preenchimento de lista de 0 a n - 1 elementos
 		y = np.full(self.instancia.n, -1, dtype = int) # todos os elementos não estão associados a grupos no começo
@@ -28,13 +37,7 @@ class FabricaSolucao():
 			z[grupo] += 1 # incrementando a quantidade de elementos do grupo
 			nums = np.delete(nums, indice) # exclusão do elemento associado
 
-		custo = 0
-
-		for i in range(self.instancia.g): # cálculo do custo da solução
-			elems_grupo_i = np.where(y == i)[0] # quais elementos são do grupo i
-			custo += np.sum(self.instancia.distancias[elems_grupo_i][:, elems_grupo_i]) # soma das distancias entre os elementos do grupo i
-
-		return Solucao(y, z, custo)
+		return Solucao(y, z, self.custo(y))
 
 	def escolher_elemento_grasp(self, elementos_grupo, elems, grupos, alpha, y, z, lim):
 		score = np.array([np.sum(self.instancia.distancias[e][elementos_grupo[g]]) / len(elementos_grupo[g]) 
@@ -79,13 +82,32 @@ class FabricaSolucao():
 		while elems_ordenados_distancia.size > 0:
 			elems_ordenados_distancia, grupos_abaixo_maximo = self.escolher_elemento_grasp(elementos_grupo, elems_ordenados_distancia, grupos_abaixo_maximo, alpha, y, z, self.limSup)
 
-		custo = 0
+		return Solucao(y, z, self.custo(y))
 
-		for i in range(self.instancia.g): # cálculo do custo da solução
-			elems_grupo_i = np.where(y == i)[0] # quais elementos são do grupo i
-			custo += np.sum(self.instancia.distancias[elems_grupo_i][:, elems_grupo_i]) # soma das distancias entre os elementos do grupo i
+	def wj(self):
+		nums = np.arange(self.instancia.n) # preenchimento de lista de 0 a n - 1 elementos
+		y = np.full(self.instancia.n, -1, dtype = int) # todos os elementos não estão associados a grupos no começo
+		z = np.zeros(self.instancia.g, dtype = int) # os grupos começam vazios
 
-		return Solucao(y, z, custo)
+		i = np.random.choice(nums.size)
+		e = nums[i]
+		y[e] = 0
+		z[0] = 1 
+		nums = np.delete(nums, i)
 
+		g = 1
+		while nums.size > 0:
+			if z[g] < self.limSup[g]:
+				e_similar_indice = np.argmin(self.instancia.distancias[e][nums])
+				e = nums[e_similar_indice]
+				y[e] = g
+				z[g] += 1
+				nums = np.delete(nums, e_similar_indice)
+
+			g += 1
+			if g >= self.instancia.g:
+				g = 0
+
+		return Solucao(y, z, self.custo(y))
 
 
