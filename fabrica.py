@@ -1,6 +1,9 @@
 from solucao_inicial import Solucao
 from random import randint
 import numpy as np
+import os
+from leitor import Instancia
+import time
 
 class FabricaSolucao():
 	
@@ -110,4 +113,41 @@ class FabricaSolucao():
 
 		return Solucao(y, z, self.custo(y))
 
+def executarTestes(resultados, tipo, r, arquivos):
+	resultados.write('\n\n############################' + tipo + '############################\n\n')
+	for arq in arquivos[:10]:
+		instancia = Instancia.ler_arquivo(os.path.join(r, arq))
+		fabrica = FabricaSolucao(instancia)
+		alpha = None
+		if tipo == 'Aleatório':
+			construcao = fabrica.produzir_solucao
+		elif tipo == 'GRASP':
+			construcao = fabrica.grasp
+			alpha = .5
+		else:
+			construcao = fabrica.wj
+		custo = np.array([])
+		tempo = np.array([])
+		for _ in range(10):
+			start = time.time()
+			custo = np.append(custo, construcao().f if not alpha else construcao(alpha).f)
+			tempo = np.append(tempo, time.time() - start)
+		resultados.write("{0}\t{1:.2f}\t\t{2:.3f}\t{3:.3f}\t\t{4:.3f}\t{5:.3f}\n".
+			format(arq, np.max(custo), np.average(custo), np.std(custo), np.average(tempo), np.std(tempo)))
 
+
+if __name__ == '__main__':
+	caminho = 'mdgplib/'
+	for r, d, f in os.walk(caminho):
+		arquivos = []
+		for file in f:
+			if 'resultados.txt' != file:
+				arquivos.append(file)
+		arquivos.sort()
+		resultados = open('resultados_construcao.txt', 'w')
+		resultados.write('Instância\tmelhor custo\tmédia custo\t\tstd custo\tmédia tempo\t\tstd tempo\n')
+		executarTestes(resultados, 'Aleatório', r, arquivos)
+		executarTestes(resultados, 'GRASP', r, arquivos)
+		executarTestes(resultados, 'WJ', r, arquivos)
+		resultados.close()
+		
