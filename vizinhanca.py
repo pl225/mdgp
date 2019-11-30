@@ -1,5 +1,9 @@
 from solucao_inicial import Solucao
 import numpy as np
+import sys
+from leitor import Instancia
+import time
+from fabrica import FabricaSolucao
 
 class Vizinhanca():
 	
@@ -115,4 +119,38 @@ class Vizinhanca():
 		
 		else:
 			return s # retorno da mesma solução, já que não há vizinho viável
-		
+
+	def rvns(self, s, vizinhancas, kmax):
+		k = 1
+		s_melhor = s
+		while k <= kmax:
+			s_vizinho = vizinhancas(s_melhor, k)
+			if s_vizinho.f > s_melhor.f:
+				s_melhor = s_vizinho
+				k = 1
+			else:
+				k += 1
+		return s_melhor
+
+	def rvns_relocacao(self, s, n):
+		return self.rvns(s, self.relocacao, n)
+
+	def rvns_swap(self, s, n):
+		return self.rvns(s, self.swap, n)
+
+	def rvns_swap_generico(self, s, m, n):
+		def swap_m(ss, k):
+			return self.swap_generico(ss, m, k)
+		return self.rvns(s, swap_m, n)
+
+if __name__ == '__main__':
+	instancia = Instancia.ler_arquivo(sys.argv[1])
+	vizinhanca = Vizinhanca(instancia)
+	fabrica = FabricaSolucao(instancia)
+	s = fabrica.produzir_solucao()
+
+	print(s)
+	start = time.time()
+	ss = vizinhanca.rvns_swap_generico(s, 4, 3)
+	print(time.time() - start)
+	print(ss)
