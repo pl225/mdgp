@@ -4,6 +4,7 @@ import numpy as np
 import os
 from leitor import Instancia
 import time
+import sys
 
 class FabricaSolucao():
 	
@@ -43,13 +44,18 @@ class FabricaSolucao():
 		return Solucao(y, z, self.custo(y))
 
 	def escolher_elemento_grasp(self, elementos_grupo, elems, grupos, alpha, y, z, lim):
-		score = np.array([np.sum(self.instancia.distancias[e][elementos_grupo[g]]) / len(elementos_grupo[g]) 
-				for e in elems for g in grupos]) # calculo da diversidade do de um elemento para todos os grupos
+		
+		n_possibilidades = elems.size * grupos.size # número máximo de candidatos
+		cands_aleatorio = np.random.choice(n_possibilidades, min(n_possibilidades, 1500 // self.instancia.g), False) # seleção aleatória dos candidatos
+		score = np.array(
+			[np.sum(self.instancia.distancias[c // grupos.size][elementos_grupo[c % grupos.size]]) / len(elementos_grupo[c % grupos.size]) 
+				for c in cands_aleatorio]
+		) # calculo da diversidade do de um elemento para todos os grupos
 
 		mini, maxi = np.min(score), np.max(score) # cálculo dos extremos da pontuação
 		LRC = np.where(score >= maxi - alpha * (maxi - mini))[0] # construção da LRC
 		e = np.random.choice(LRC) # escolha do elemento
-		i, j = e // grupos.size, e % grupos.size
+		i, j = cands_aleatorio[e] // grupos.size, cands_aleatorio[e] % grupos.size
 
 		y[elems[i]] = grupos[j]
 		z[grupos[j]] += 1
@@ -153,4 +159,3 @@ if __name__ == '__main__':
 	executarTestes(resultados, 'WJ', arquivos)
 	print('Acabou o WJ');
 	resultados.close()
-		

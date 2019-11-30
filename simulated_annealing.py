@@ -17,7 +17,7 @@ class SimulatedAnnealing():
 
 	def executar(self, alpha, temperatura_inicial, temperatura_final, s_max, tipo):
 		
-		s = self.fabrica.produzir_solucao() if tipo == 'Aleatório' else self.fabrica.wj()
+		s = self.fabrica.grasp(0.5)# if tipo == 'Aleatório' else self.fabrica.wj()
 		s_melhor = s
 		t = temperatura_inicial
 
@@ -70,12 +70,12 @@ if __name__ == '__main__':
 			if 'resultados_heuristica.txt' != file and any(i in file for i in ['120', '240', '480', '960']):
 				arquivos.append(os.path.join(r, file))
 	arquivos.sort()
-	resultados = open('resultados_heuristica_simples.txt', 'w')
+	resultados = open('resultados_heuristica_simples.txt', 'a')
 	resultados.write('Instância\tmelhor custo\tmédia custo\t\tstd custo\tmédia tempo\t\tstd tempo\n')
 	executarTestes(resultados, 'Aleatório', arquivos)
 	print('Acabou o aleatório')
-	#executarTestes(resultados, 'GRASP', arquivos)
-	#print('Acabou o GRASP')
+	executarTestes(resultados, 'GRASP', arquivos)
+	print('Acabou o GRASP')
 	executarTestes(resultados, 'WJ', arquivos)
 	print('Acabou o WJ');
 	resultados.close()
